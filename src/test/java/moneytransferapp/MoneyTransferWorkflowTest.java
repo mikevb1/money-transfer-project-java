@@ -10,6 +10,7 @@ import io.temporal.client.WorkflowOptions;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
 
+import moneytransferapp.temporal.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

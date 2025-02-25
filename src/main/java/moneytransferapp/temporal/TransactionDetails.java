@@ -1,5 +1,5 @@
 // @@@SNIPSTART money-transfer-java-transaction-details
-package moneytransferapp;
+package moneytransferapp.temporal;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(as = CoreTransactionDetails.class)

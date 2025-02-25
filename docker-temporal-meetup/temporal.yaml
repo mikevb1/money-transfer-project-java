@@ -1,0 +1,20 @@
+persistence:
+  defaultStore: default
+  visibilityStore: default
+  datastores:
+    default:
+      sql:
+        plugin: postgres
+        database: temporaldatabase
+        user: admin
+        password: admin
+        host: db
+        port: 5432
+    visibility:
+      sql:
+        plugin: postgres
+        database: temporaldatabase
+        user: admin
+        password: admin
+        host: db
+        port: 5432

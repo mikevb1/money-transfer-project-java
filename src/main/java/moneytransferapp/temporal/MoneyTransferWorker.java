@@ -1,5 +1,5 @@
 // @@@SNIPSTART money-transfer-java-worker
-package moneytransferapp;
+package moneytransferapp.temporal;
 
 import io.temporal.client.WorkflowClient;
 import io.temporal.serviceclient.WorkflowServiceStubs;

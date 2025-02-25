@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgresql:
+    image: postgres:12
+    container_name: postgres-db-temporal
+    environment:
+      POSTGRES_DB: temporaldatabase
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql_12/data_temporal
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    container_name: temporal
+    depends_on:
+      - postgresql
+    environment:
+      # Temporal settings for PostgreSQL
+      - DB=postgres12
+#      - DB_HOST=postgres-db-temporal
+      - DB_PORT=5432
+#      - DB_NAME=temporaldatabase
+      - POSTGRES_USER=admin
+      - POSTGRES_PWD=admin
+      - POSTGRES_SEEDS=postgresql
+#      - PERSISTENCE_DEFAULT=postgresql
+      - TEMPORAL_LOG_LEVEL=debug
+    volumes:
+      - ./temporal.yaml:/etc/temporal/temporal.yaml
+    ports:
+      - "7233:7233"   # Temporal service
+  temporal-ui:
+    container_name: temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    image: temporalio/ui:latest
+#    networks:
+#      - temporal-network
+    ports:
+      - "8080:8080"
+#networks:
+#  temporal-network:
+#    driver: bridge
+#    name: temporal-network
+
+volumes:
+  postgres_data:

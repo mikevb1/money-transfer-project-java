@@ -1,5 +1,5 @@
 // @@@SNIPSTART money-transfer-java-workflow-implementation
-package moneytransferapp;
+package moneytransferapp.temporal;
 
 import io.temporal.activity.ActivityOptions;
 import io.temporal.workflow.Workflow;
@@ -11,6 +11,7 @@ import java.util.Map;
 
 public class MoneyTransferWorkflowImpl implements MoneyTransferWorkflow {
     private static final String WITHDRAW = "Withdraw";
+    private boolean approved = false;
 
     // RetryOptions specify how to automatically handle retries when Activities fail
     private final RetryOptions retryoptions = RetryOptions.newBuilder()
@@ -50,20 +51,30 @@ public class MoneyTransferWorkflowImpl implements MoneyTransferWorkflow {
         String transactionReferenceId = transaction.getTransactionReferenceId();
         int amountToTransfer = transaction.getAmountToTransfer();
 
+        System.out.printf("[%s] Processing transaction: $%d from %s to %s.\n", transactionReferenceId, amountToTransfer, sourceAccountId, destinationAccountId);
+
         // Stage 1: Withdraw funds from source
         try {
             // Launch `withdrawal` Activity
             accountActivityStub.withdraw(sourceAccountId, transactionReferenceId, amountToTransfer);
         } catch (Exception e) {
             // If the withdrawal fails, for any exception, it's caught here
-            System.out.printf("[%s] Withdrawal of $%d from account %s failed", transactionReferenceId, amountToTransfer, sourceAccountId);
+            System.out.printf("[%s] Withdrawal of $%d from account %s failed.\n", transactionReferenceId, amountToTransfer, sourceAccountId);
             System.out.flush();
 
             // Transaction ends here
             return;
         }
 
-        // Stage 2: Deposit funds to destination
+        // Stage 2: If the transaction amount is more than 1000, wait for manual approval
+        if (amountToTransfer > 1000) {
+            System.out.printf("[%s] Transaction requires manual approval.\n", transactionReferenceId);
+            // 🚨 Wait for approval before proceeding
+            Workflow.await(() -> approved);
+            System.out.printf("[%s] Transaction approved.\n", transactionReferenceId);
+        }
+
+        // Stage 3: Deposit funds to destination
         try {
             // Perform `deposit` Activity
             accountActivityStub.deposit(destinationAccountId, transactionReferenceId, amountToTransfer);
@@ -71,17 +82,18 @@ public class MoneyTransferWorkflowImpl implements MoneyTransferWorkflow {
             // The `deposit` was successful
             System.out.printf("[%s] Transaction succeeded.\n", transactionReferenceId);
             System.out.flush();
+//            updateTransactionStatus(TransactionStatus.COMPLETED, transaction);
 
-            //  Transaction ends here
+            // Transaction ends here
             return;
         } catch (Exception e) {
             // If the deposit fails, for any exception, it's caught here
             System.out.printf("[%s] Deposit of $%d to account %s failed.\n", transactionReferenceId, amountToTransfer, destinationAccountId);
             System.out.flush();
+//            updateTransactionStatus(TransactionStatus.DECLINED, transaction);
         }
 
-        // Continue by compensating with a refund
-
+        // Stage 4: Continue by compensating with a refund
         try {
             // Perform `refund` Activity
             System.out.printf("[%s] Refunding $%d to account %s.\n", transactionReferenceId, amountToTransfer, sourceAccountId);
@@ -92,17 +104,29 @@ public class MoneyTransferWorkflowImpl implements MoneyTransferWorkflow {
             // Recovery successful. Transaction ends here
             System.out.printf("[%s] Refund to originating account was successful.\n", transactionReferenceId);
             System.out.printf("[%s] Transaction is complete. No transfer made.\n", transactionReferenceId);
-            return;
         } catch (Exception e) {
             // A recovery mechanism can fail too. Handle any exception here
-            System.out.printf("[%s] Deposit of $%d to account %s failed. Did not compensate withdrawal.\n",
-                transactionReferenceId, amountToTransfer, destinationAccountId);
-            System.out.printf("[%s] Workflow failed.", transactionReferenceId);
+            System.out.printf("[%s] Deposit of $%d to account %s failed. Did not compensate withdrawal.\n", transactionReferenceId, amountToTransfer, destinationAccountId);
+            System.out.printf("[%s] Workflow failed.\n", transactionReferenceId);
             System.out.flush();
 
             // Rethrowing the exception causes a Workflow Task failure
             throw(e);
         }
     }
+
+    @Override
+    public void approveTransaction(TransactionDetails transaction) {
+        // This signal method is used to approve the transaction when it's over 1000
+        System.out.printf("[%s] Transaction %s manually approved.\n", transaction.getTransactionReferenceId(), transaction.getTransactionReferenceId());
+        this.approved = true;  // Unblock the workflow
+    }
+
+    @Override
+    public void disapproveTransaction(TransactionDetails transaction) {
+        System.out.printf("[%s] Transaction %s manually disapproved.\n", transaction.getTransactionReferenceId(), transaction.getTransactionReferenceId());
+        this.approved = false;  // Unblock the workflow
+    }
+
 }
 // @@@SNIPEND

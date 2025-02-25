@@ -7,7 +7,7 @@ clean:
 	@mvn clean -q -Dmaven.logging.level=0
 
 worker:
-	@mvn compile exec:java -Dexec.mainClass="moneytransferapp.MoneyTransferWorker" -Dorg.slf4j.simpleLogger.defaultLogLevel=warn
+	@mvn compile exec:java -Dexec.mainClass="moneytransferapp.temporal.MoneyTransferWorker" -Dorg.slf4j.simpleLogger.defaultLogLevel=warn
 
 run:
-	@mvn compile exec:java -Dexec.mainClass="moneytransferapp.TransferApp" -Dorg.slf4j.simpleLogger.defaultLogLevel=warn
+	@mvn compile exec:java -Dexec.mainClass="moneytransferapp.temporal.TransferApp" -Dorg.slf4j.simpleLogger.defaultLogLevel=warn
