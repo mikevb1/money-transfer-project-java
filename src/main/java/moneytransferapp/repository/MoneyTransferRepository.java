@@ -10,7 +10,6 @@ import java.util.UUID;
 @Repository
 public interface MoneyTransferRepository extends JpaRepository<MoneyTransferWorkFlowModel, UUID> {
 
-
     Optional<MoneyTransferWorkFlowModel> findByTransactionReference(String transactionReference);
 
 }

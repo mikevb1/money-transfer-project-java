@@ -1,11 +1,11 @@
 package moneytransferapp.model;
 
 import jakarta.persistence.*;
-import jakarta.transaction.Transactional;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -25,10 +25,14 @@ public class MoneyTransferWorkFlowModel {
     private String toAccount;
     private int amountToTransfer;
 
+    private LocalDateTime createdAt;
+
+    private LocalDateTime processedAt;
+
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
 
-    public MoneyTransferWorkFlowModel(String workflowId, String runId, String transactionReference, String fromAccount, String toAccount, int amountToTransfer, TransactionStatus status) {
+    public MoneyTransferWorkFlowModel(String workflowId, String runId, String transactionReference, String fromAccount, String toAccount, int amountToTransfer, TransactionStatus status, LocalDateTime createdAt, LocalDateTime processedAt) {
         this.workflowId = workflowId;
         this.runId = runId;
         this.transactionReference = transactionReference;
@@ -36,6 +40,8 @@ public class MoneyTransferWorkFlowModel {
         this.toAccount = toAccount;
         this.amountToTransfer = amountToTransfer;
         this.status = status;
+        this.createdAt = createdAt;
+        this.processedAt = processedAt;
     }
 
 }

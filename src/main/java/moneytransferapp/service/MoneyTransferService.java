@@ -6,6 +6,7 @@ import io.temporal.client.WorkflowOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
+import moneytransferapp.dto.TransactionRequest;
 import moneytransferapp.model.MoneyTransferWorkFlowModel;
 import moneytransferapp.model.TransactionStatus;
 import moneytransferapp.temporal.*;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import moneytransferapp.repository.MoneyTransferRepository;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -21,9 +23,10 @@ public class MoneyTransferService {
 
     private final MoneyTransferRepository moneyTransferRepository;
     private final WorkflowClient client;
+    private static final Integer MIN_AMOUNT_FOR_APPROVAL = 1000;
 
     @Autowired
-    public MoneyTransferService(WorkflowClient client, MoneyTransferRepository moneyTransferRepository) {
+    public MoneyTransferService(MoneyTransferRepository moneyTransferRepository) {
         this.moneyTransferRepository = moneyTransferRepository;
 
 
@@ -45,7 +48,7 @@ public class MoneyTransferService {
         factory.start();
     }
 
-    public Map<String, String> startTransaction() {
+    public String startTransaction() {
         // Create the workflow options
         WorkflowOptions options = WorkflowOptions.newBuilder()
                 .setTaskQueue(Shared.MONEY_TRANSFER_TASK_QUEUE)
@@ -60,7 +63,12 @@ public class MoneyTransferService {
         String fromAccount = TransferApp.randomAccountIdentifier();
         String toAccount = TransferApp.randomAccountIdentifier();
         int amountToTransfer = ThreadLocalRandom.current().nextInt(100, 5000);
-        TransactionStatus status = TransactionStatus.IN_PROGRESS;
+        TransactionStatus status;
+        if (amountToTransfer < MIN_AMOUNT_FOR_APPROVAL) {
+            status = TransactionStatus.IN_PROGRESS;
+        } else {
+            status = TransactionStatus.PENDING;
+        }
         TransactionDetails transaction = new CoreTransactionDetails(fromAccount, toAccount, referenceId, amountToTransfer);
 
         // Start the workflow
@@ -72,6 +80,9 @@ public class MoneyTransferService {
         response.put("runId", we.getRunId());
         response.put("transactionReference", referenceId);
 
+        LocalDateTime createdAt = LocalDateTime.now();
+
+
         // Save the workflow information to the database
         MoneyTransferWorkFlowModel moneyTransferWorkflowEntity = new MoneyTransferWorkFlowModel(
                 we.getWorkflowId(),
@@ -80,12 +91,24 @@ public class MoneyTransferService {
                 fromAccount,
                 toAccount,
                 amountToTransfer,
-                status
+                status,
+                createdAt,
+                null
         );
 
         moneyTransferRepository.save(moneyTransferWorkflowEntity);
 
-        return response;
+        if (amountToTransfer >= 1000) {
+            return String.format(
+                    "Request received. Because your request of €%d is higher than $1000, it needs to be reviewed. Thank you for your patience.",
+                    amountToTransfer
+            );
+        } else {
+            moneyTransferWorkflowEntity.setStatus(TransactionStatus.APPROVED);
+            moneyTransferWorkflowEntity.setProcessedAt(LocalDateTime.now());
+            moneyTransferRepository.save(moneyTransferWorkflowEntity);
+            return "Amount of €" + amountToTransfer + " transferred.";
+        }
     }
 
     public List<MoneyTransferWorkFlowModel> getTransactions() {
@@ -114,7 +137,8 @@ public class MoneyTransferService {
 
                 // Try to approve the transaction, if the workflow is active
                 workflow.approveTransaction(mapToTransactionDetails(transaction));
-                transaction.setStatus(TransactionStatus.COMPLETED);
+                transaction.setStatus(TransactionStatus.APPROVED);
+                transaction.setProcessedAt(LocalDateTime.now());
                 moneyTransferRepository.save(transaction);
                 return "Transaction " + transactionReference + " manually approved.";
 
@@ -150,6 +174,7 @@ public class MoneyTransferService {
                 // Try to approve the transaction, if the workflow is active
                 workflow.disapproveTransaction(mapToTransactionDetails(transaction));
                 transaction.setStatus(TransactionStatus.DECLINED);
+                transaction.setProcessedAt(LocalDateTime.now());
                 moneyTransferRepository.save(transaction);
                 return "Transaction " + transactionReference + " manually disapproved. Starting refund";
 
@@ -163,6 +188,71 @@ public class MoneyTransferService {
         }
     }
 
+    public String requestTransfer(TransactionRequest request) {
+
+        // Create the workflow options
+        WorkflowOptions options = WorkflowOptions.newBuilder()
+                .setTaskQueue(Shared.MONEY_TRANSFER_TASK_QUEUE)
+                .setWorkflowId(String.valueOf(UUID.randomUUID()))
+                .build();
+
+        // Create the workflow stub
+        MoneyTransferWorkflow workflow = client.newWorkflowStub(MoneyTransferWorkflow.class, options);
+
+        // Generate random transaction details
+        String referenceId = UUID.randomUUID().toString().substring(0, 18);
+        String fromAccount = request.fromAccount();
+        String toAccount = request.toAccount();
+        int amountToTransfer = request.amountToTransfer();
+
+        TransactionStatus status;
+
+        if (amountToTransfer < MIN_AMOUNT_FOR_APPROVAL) {
+            status = TransactionStatus.IN_PROGRESS;
+        } else {
+            status = TransactionStatus.PENDING;
+        }
+
+        TransactionDetails transaction = new CoreTransactionDetails(fromAccount, toAccount, referenceId, amountToTransfer);
+
+        // Start the workflow
+        WorkflowExecution we = WorkflowClient.start(workflow::transfer, transaction);
+
+        // Create the response map
+        Map<String, String> response = new HashMap<>();
+        response.put("workflowId", we.getWorkflowId());
+        response.put("runId", we.getRunId());
+        response.put("transactionReference", referenceId);
+
+        LocalDateTime createdAt = LocalDateTime.now();
+
+        // Save the workflow information to the database
+        MoneyTransferWorkFlowModel moneyTransferWorkflowEntity = new MoneyTransferWorkFlowModel(
+                we.getWorkflowId(),
+                we.getRunId(),
+                referenceId,
+                fromAccount,
+                toAccount,
+                amountToTransfer,
+                status,
+                createdAt,
+                null
+        );
+
+        moneyTransferRepository.save(moneyTransferWorkflowEntity);
+
+        if (amountToTransfer >= 1000) {
+            return String.format(
+                    "Request received. Because your request of €%d is higher than $1000, it needs to be reviewed. Thank you for your patience.",
+                    amountToTransfer
+            );
+        } else {
+            moneyTransferWorkflowEntity.setStatus(TransactionStatus.APPROVED);
+            moneyTransferWorkflowEntity.setProcessedAt(LocalDateTime.now());
+            moneyTransferRepository.save(moneyTransferWorkflowEntity);
+            return "Amount of €" + amountToTransfer + " transferred.";
+        }
+    }
         public TransactionDetails mapToTransactionDetails (MoneyTransferWorkFlowModel workflowModel){
             return new CoreTransactionDetails(
                     workflowModel.getFromAccount(),       // sourceAccountId
@@ -172,11 +262,14 @@ public class MoneyTransferService {
             );
         }
 
-        // Assuming you have a repository and a service
+    public void updateTransactionStatusInDatabase(String transactionReference, TransactionStatus status) {
+        Optional<MoneyTransferWorkFlowModel> transactionOpt = moneyTransferRepository.findByTransactionReference(transactionReference);
 
-        public MoneyTransferWorkFlowModel getTransactionByReference (String transactionReference){
-            return moneyTransferRepository.findByTransactionReference(transactionReference)
-                    .orElseThrow(() -> new RuntimeException("Transaction not found"));
+        if (transactionOpt.isPresent()) {
+            MoneyTransferWorkFlowModel transaction = transactionOpt.get();
+            transaction.setStatus(status);  // Set the new status (approved or declined)
+            moneyTransferRepository.save(transaction);  // Save the updated status
         }
+    }
 
     }

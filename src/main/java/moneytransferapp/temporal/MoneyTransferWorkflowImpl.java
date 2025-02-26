@@ -4,14 +4,17 @@ package moneytransferapp.temporal;
 import io.temporal.activity.ActivityOptions;
 import io.temporal.workflow.Workflow;
 import io.temporal.common.RetryOptions;
-
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+import static moneytransferapp.model.TransactionStatus.*;
+
 public class MoneyTransferWorkflowImpl implements MoneyTransferWorkflow {
+    private static final Integer MIN_AMOUNT_FOR_APPROVAL = 1000;
     private static final String WITHDRAW = "Withdraw";
     private boolean approved = false;
+    private boolean approvalPending = true;
 
     // RetryOptions specify how to automatically handle retries when Activities fail
     private final RetryOptions retryoptions = RetryOptions.newBuilder()
@@ -67,12 +70,30 @@ public class MoneyTransferWorkflowImpl implements MoneyTransferWorkflow {
         }
 
         // Stage 2: If the transaction amount is more than 1000, wait for manual approval
-        if (amountToTransfer > 1000) {
+        if (amountToTransfer >= MIN_AMOUNT_FOR_APPROVAL) {
             System.out.printf("[%s] Transaction requires manual approval.\n", transactionReferenceId);
-            // 🚨 Wait for approval before proceeding
-            Workflow.await(() -> approved);
-            System.out.printf("[%s] Transaction approved.\n", transactionReferenceId);
+
+            // Wait until approvalPending is set to false (either approved or disapproved)
+            Workflow.await(() -> !approvalPending);
+
+            if (!approved) { // If disapproved, trigger refund
+                System.out.printf("[%s] Transaction disapproved. Initiating refund.", transactionReferenceId);
+
+                try {
+                    accountActivityStub.refund(sourceAccountId, transactionReferenceId, amountToTransfer);
+                    System.out.printf("[%s] Refund successful.\n", transactionReferenceId);
+                } catch (Exception e) {
+                    System.out.printf("[%s] Refund failed.\n", transactionReferenceId);
+                    throw e; // Fail workflow if refund fails
+                }
+
+                return; // Exit workflow since transaction was disapproved
+            }
+
+            // SET THE STATUS TO APPROVED
+            System.out.printf("[%s] Transaction approved. Proceeding with deposit.\n", transactionReferenceId);
         }
+
 
         // Stage 3: Deposit funds to destination
         try {
@@ -82,7 +103,6 @@ public class MoneyTransferWorkflowImpl implements MoneyTransferWorkflow {
             // The `deposit` was successful
             System.out.printf("[%s] Transaction succeeded.\n", transactionReferenceId);
             System.out.flush();
-//            updateTransactionStatus(TransactionStatus.COMPLETED, transaction);
 
             // Transaction ends here
             return;
@@ -90,7 +110,6 @@ public class MoneyTransferWorkflowImpl implements MoneyTransferWorkflow {
             // If the deposit fails, for any exception, it's caught here
             System.out.printf("[%s] Deposit of $%d to account %s failed.\n", transactionReferenceId, amountToTransfer, destinationAccountId);
             System.out.flush();
-//            updateTransactionStatus(TransactionStatus.DECLINED, transaction);
         }
 
         // Stage 4: Continue by compensating with a refund
@@ -119,13 +138,16 @@ public class MoneyTransferWorkflowImpl implements MoneyTransferWorkflow {
     public void approveTransaction(TransactionDetails transaction) {
         // This signal method is used to approve the transaction when it's over 1000
         System.out.printf("[%s] Transaction %s manually approved.\n", transaction.getTransactionReferenceId(), transaction.getTransactionReferenceId());
-        this.approved = true;  // Unblock the workflow
+        this.approved = true;
+        this.approvalPending = false;
     }
 
     @Override
     public void disapproveTransaction(TransactionDetails transaction) {
         System.out.printf("[%s] Transaction %s manually disapproved.\n", transaction.getTransactionReferenceId(), transaction.getTransactionReferenceId());
         this.approved = false;  // Unblock the workflow
+        this.approvalPending = false; // Stop waiting
+
     }
 
 }

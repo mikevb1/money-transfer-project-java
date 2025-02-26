@@ -1,0 +1,123 @@
+{
+	"info": {
+		"name": "Temporal Meetup",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+	},
+	"item": [
+		{
+			"name": "Get all transactions",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8081/transactions",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"transactions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Start random transaction",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "localhost:8081/transactions/start",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"transactions",
+						"start"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Start new transaction",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"fromAccount\": \"TO_BE_FILLED_IN\",\n    \"toAccount\": \"TO_BE_FILLED_IN\",\n    \"amountToTransfer\": TO_BE_FILLED_IN\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8081/transactions/requestTransaction",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"transactions",
+						"requestTransaction"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Approve transaction",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "localhost:8081/transactions/approve?transactionReference=TO_BE_FILLED_IN",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"transactions",
+						"approve"
+					],
+					"query": [
+						{
+							"key": "transactionReference",
+							"value": "TO_BE_FILLED_IN"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Disapprove transaction",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "localhost:8081/transactions/disapprove?transactionReference=b75a9452-7717-4a52",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"transactions",
+						"disapprove"
+					],
+					"query": [
+						{
+							"key": "transactionReference",
+							"value": "TO_BE_FILLED_IN"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

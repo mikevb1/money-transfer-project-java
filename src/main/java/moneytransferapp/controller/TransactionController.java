@@ -1,6 +1,6 @@
 package moneytransferapp.controller;
+import moneytransferapp.dto.TransactionRequest;
 import moneytransferapp.model.MoneyTransferWorkFlowModel;
-import moneytransferapp.temporal.TransactionDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import moneytransferapp.service.MoneyTransferService;
@@ -19,7 +19,7 @@ public class TransactionController {
     }
 
     @PostMapping("/start")
-    public Map<String, String> startTransaction() {
+    public String startTransaction() {
 
         return moneyTransferService.startTransaction();
 
@@ -41,5 +41,11 @@ public class TransactionController {
     public String disapproveTransaction(@RequestParam String transactionReference) {
 
         return moneyTransferService.disapproveTransaction(transactionReference);
+    }
+
+    @PostMapping("/requestTransaction")
+    public String requestTransaction(@RequestBody TransactionRequest request) {
+
+        return moneyTransferService.requestTransfer(request);
     }
 }
