@@ -5,19 +5,18 @@ public class CoreTransactionDetails implements TransactionDetails {
     private String sourceAccountId;
     private String destinationAccountId;
     private String transactionReferenceId;
-    private int amountToTransfer;
+    private double amountToTransfer;
 
     // MARK: Constructor
-    
+
     public CoreTransactionDetails() {
         // Default constructor is needed for Jackson deserialization
     }
 
     public CoreTransactionDetails(String sourceAccountId,
-                                  String destinationAccountId,
-                                  String transactionReferenceId,
-                                  int amountToTransfer)
-    {
+            String destinationAccountId,
+            String transactionReferenceId,
+            double amountToTransfer) {
         this.sourceAccountId = sourceAccountId;
         this.destinationAccountId = destinationAccountId;
         this.transactionReferenceId = transactionReferenceId;
@@ -38,7 +37,8 @@ public class CoreTransactionDetails implements TransactionDetails {
         return transactionReferenceId;
     }
 
-    public int getAmountToTransfer() {
+    @Override
+    public double getAmountToTransfer() {
         return amountToTransfer;
     }
 }

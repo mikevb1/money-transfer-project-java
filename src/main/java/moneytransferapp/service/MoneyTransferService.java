@@ -29,14 +29,12 @@ public class MoneyTransferService {
     public MoneyTransferService(MoneyTransferRepository moneyTransferRepository) {
         this.moneyTransferRepository = moneyTransferRepository;
 
-
         WorkflowServiceStubs serviceStubs = WorkflowServiceStubs.newLocalServiceStubs();
 
         this.client = WorkflowClient.newInstance(serviceStubs);
 
         startWorker();
     }
-
 
     private void startWorker() {
         WorkerFactory factory = WorkerFactory.newInstance(client);
@@ -62,14 +60,15 @@ public class MoneyTransferService {
         String referenceId = UUID.randomUUID().toString().substring(0, 18);
         String fromAccount = TransferApp.randomAccountIdentifier();
         String toAccount = TransferApp.randomAccountIdentifier();
-        int amountToTransfer = ThreadLocalRandom.current().nextInt(100, 5000);
+        double amountToTransfer = ThreadLocalRandom.current().nextInt(100, 5000);
         TransactionStatus status;
         if (amountToTransfer < MIN_AMOUNT_FOR_APPROVAL) {
             status = TransactionStatus.IN_PROGRESS;
         } else {
             status = TransactionStatus.PENDING;
         }
-        TransactionDetails transaction = new CoreTransactionDetails(fromAccount, toAccount, referenceId, amountToTransfer);
+        TransactionDetails transaction = new CoreTransactionDetails(fromAccount, toAccount, referenceId,
+                amountToTransfer);
 
         // Start the workflow
         WorkflowExecution we = WorkflowClient.start(workflow::transfer, transaction);
@@ -82,7 +81,6 @@ public class MoneyTransferService {
 
         LocalDateTime createdAt = LocalDateTime.now();
 
-
         // Save the workflow information to the database
         MoneyTransferWorkFlowModel moneyTransferWorkflowEntity = new MoneyTransferWorkFlowModel(
                 we.getWorkflowId(),
@@ -93,21 +91,19 @@ public class MoneyTransferService {
                 amountToTransfer,
                 status,
                 createdAt,
-                null
-        );
+                null);
 
         moneyTransferRepository.save(moneyTransferWorkflowEntity);
 
         if (amountToTransfer >= 1000) {
             return String.format(
-                    "Request received. Because your request of €%d is higher than $1000, it needs to be reviewed. Thank you for your patience.",
-                    amountToTransfer
-            );
+                    "Request received. Because your request of €%.2f is higher than €1000, it needs to be reviewed. Thank you for your patience.",
+                    amountToTransfer);
         } else {
             moneyTransferWorkflowEntity.setStatus(TransactionStatus.APPROVED);
             moneyTransferWorkflowEntity.setProcessedAt(LocalDateTime.now());
             moneyTransferRepository.save(moneyTransferWorkflowEntity);
-            return "Amount of €" + amountToTransfer + " transferred.";
+            return String.format("Amount of €%.2f transferred.", amountToTransfer);
         }
     }
 
@@ -115,9 +111,9 @@ public class MoneyTransferService {
         return moneyTransferRepository.findAll();
     }
 
-
     public String approveTransaction(String transactionReference) {
-        Optional<MoneyTransferWorkFlowModel> transactionOpt = moneyTransferRepository.findByTransactionReference(transactionReference);
+        Optional<MoneyTransferWorkFlowModel> transactionOpt = moneyTransferRepository
+                .findByTransactionReference(transactionReference);
 
         System.out.println("Transaction: " + transactionOpt);
 
@@ -131,9 +127,9 @@ public class MoneyTransferService {
 
             System.out.println("Workflow ID: " + workflowId);
 
-        try {
+            try {
 
-            MoneyTransferWorkflow workflow = client.newWorkflowStub(MoneyTransferWorkflow.class, workflowId);
+                MoneyTransferWorkflow workflow = client.newWorkflowStub(MoneyTransferWorkflow.class, workflowId);
 
                 // Try to approve the transaction, if the workflow is active
                 workflow.approveTransaction(mapToTransactionDetails(transaction));
@@ -153,7 +149,8 @@ public class MoneyTransferService {
     }
 
     public String disapproveTransaction(String transactionReference) {
-        Optional<MoneyTransferWorkFlowModel> transactionOpt = moneyTransferRepository.findByTransactionReference(transactionReference);
+        Optional<MoneyTransferWorkFlowModel> transactionOpt = moneyTransferRepository
+                .findByTransactionReference(transactionReference);
 
         System.out.println("Transaction: " + transactionOpt);
 
@@ -203,7 +200,7 @@ public class MoneyTransferService {
         String referenceId = UUID.randomUUID().toString().substring(0, 18);
         String fromAccount = request.fromAccount();
         String toAccount = request.toAccount();
-        int amountToTransfer = request.amountToTransfer();
+        double amountToTransfer = request.amountToTransfer();
 
         TransactionStatus status;
 
@@ -213,7 +210,8 @@ public class MoneyTransferService {
             status = TransactionStatus.PENDING;
         }
 
-        TransactionDetails transaction = new CoreTransactionDetails(fromAccount, toAccount, referenceId, amountToTransfer);
+        TransactionDetails transaction = new CoreTransactionDetails(fromAccount, toAccount, referenceId,
+                amountToTransfer);
 
         // Start the workflow
         WorkflowExecution we = WorkflowClient.start(workflow::transfer, transaction);
@@ -236,40 +234,40 @@ public class MoneyTransferService {
                 amountToTransfer,
                 status,
                 createdAt,
-                null
-        );
+                null);
 
         moneyTransferRepository.save(moneyTransferWorkflowEntity);
 
         if (amountToTransfer >= 1000) {
             return String.format(
-                    "Request received. Because your request of €%d is higher than $1000, it needs to be reviewed. Thank you for your patience.",
-                    amountToTransfer
-            );
+                    "Request received. Because your request of €%.2f is higher than €1000, it needs to be reviewed. Thank you for your patience.",
+                    amountToTransfer);
         } else {
             moneyTransferWorkflowEntity.setStatus(TransactionStatus.APPROVED);
             moneyTransferWorkflowEntity.setProcessedAt(LocalDateTime.now());
             moneyTransferRepository.save(moneyTransferWorkflowEntity);
-            return "Amount of €" + amountToTransfer + " transferred.";
+            return String.format("Amount of €%.2f transferred.", amountToTransfer);
         }
     }
-        public TransactionDetails mapToTransactionDetails (MoneyTransferWorkFlowModel workflowModel){
-            return new CoreTransactionDetails(
-                    workflowModel.getFromAccount(),       // sourceAccountId
-                    workflowModel.getToAccount(),         // destinationAccountId
-                    workflowModel.getTransactionReference(), // transactionReferenceId
-                    workflowModel.getAmountToTransfer()   // amountToTransfer
-            );
-        }
+
+    public TransactionDetails mapToTransactionDetails(MoneyTransferWorkFlowModel workflowModel) {
+        return new CoreTransactionDetails(
+                workflowModel.getFromAccount(), // sourceAccountId
+                workflowModel.getToAccount(), // destinationAccountId
+                workflowModel.getTransactionReference(), // transactionReferenceId
+                workflowModel.getAmountToTransfer() // amountToTransfer
+        );
+    }
 
     public void updateTransactionStatusInDatabase(String transactionReference, TransactionStatus status) {
-        Optional<MoneyTransferWorkFlowModel> transactionOpt = moneyTransferRepository.findByTransactionReference(transactionReference);
+        Optional<MoneyTransferWorkFlowModel> transactionOpt = moneyTransferRepository
+                .findByTransactionReference(transactionReference);
 
         if (transactionOpt.isPresent()) {
             MoneyTransferWorkFlowModel transaction = transactionOpt.get();
-            transaction.setStatus(status);  // Set the new status (approved or declined)
-            moneyTransferRepository.save(transaction);  // Save the updated status
+            transaction.setStatus(status); // Set the new status (approved or declined)
+            moneyTransferRepository.save(transaction); // Save the updated status
         }
     }
 
-    }
+}

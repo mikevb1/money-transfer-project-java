@@ -23,7 +23,7 @@ public class MoneyTransferWorkFlowModel {
     private String transactionReference;
     private String fromAccount;
     private String toAccount;
-    private int amountToTransfer;
+    private double amountToTransfer;
 
     private LocalDateTime createdAt;
 
@@ -32,7 +32,7 @@ public class MoneyTransferWorkFlowModel {
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
 
-    public MoneyTransferWorkFlowModel(String workflowId, String runId, String transactionReference, String fromAccount, String toAccount, int amountToTransfer, TransactionStatus status, LocalDateTime createdAt, LocalDateTime processedAt) {
+    public MoneyTransferWorkFlowModel(String workflowId, String runId, String transactionReference, String fromAccount, String toAccount, double amountToTransfer, TransactionStatus status, LocalDateTime createdAt, LocalDateTime processedAt) {
         this.workflowId = workflowId;
         this.runId = runId;
         this.transactionReference = transactionReference;

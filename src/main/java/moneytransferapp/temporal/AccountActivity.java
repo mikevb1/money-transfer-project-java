@@ -8,14 +8,14 @@ import io.temporal.activity.ActivityMethod;
 public interface AccountActivity {
     // Withdraw an amount of money from the source account
     @ActivityMethod
-    void withdraw(String accountId, String referenceId, int amount);
+    void withdraw(String accountId, String referenceId, double amount);
 
     // Deposit an amount of money into the destination account
     @ActivityMethod
-    void deposit(String accountId, String referenceId, int amount);
+    void deposit(String accountId, String referenceId, double amount);
 
     // Compensate a failed deposit by refunding to the original account
     @ActivityMethod
-    void refund(String accountId, String referenceId, int amount);
+    void refund(String accountId, String referenceId, double amount);
 }
 // @@@SNIPEND

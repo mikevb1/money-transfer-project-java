@@ -1,4 +1,5 @@
 package moneytransferapp.controller;
+
 import moneytransferapp.dto.TransactionRequest;
 import moneytransferapp.model.MoneyTransferWorkFlowModel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/transactions")
+@CrossOrigin(origins = "*")
 public class TransactionController {
 
     private final MoneyTransferService moneyTransferService;
