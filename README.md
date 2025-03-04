@@ -1,9 +1,22 @@
-# Money transfer project: Java
+# Temporal meetup project: Money transfer
 
-Learn how the pieces of a Temporal application work together.
-Follow the [Run your first app tutorial](https://docs.temporal.io/docs/java/run-your-first-app-tutorial) to learn more about Temporal Workflows.
+Dit project is een vervolg op:
+[Run your first app tutorial](https://docs.temporal.io/docs/java/run-your-first-app-tutorial) to learn more about Temporal Workflows.
 
-Note: This project uses [Snipsync](https://github.com/temporalio/snipsync) comment wrappers to automatically keep code snippets up to date within our documentation.
+## Stappen
+
+- Run de docker-compose file en start de container
+- Start de back-end
+- Run de front-end
+  - cd react-ui
+  - npm run dev
+
+## Vervolg
+
+Mogelijk opties om aan dit project toe te voegen zijn:
+- Logging
+- Email service
+- 
 
 ## Building, cleaning, and other tasks 
 

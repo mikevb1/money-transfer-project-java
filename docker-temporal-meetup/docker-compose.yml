@@ -21,13 +21,10 @@ services:
     environment:
       # Temporal settings for PostgreSQL
       - DB=postgres12
-#      - DB_HOST=postgres-db-temporal
       - DB_PORT=5432
-#      - DB_NAME=temporaldatabase
       - POSTGRES_USER=admin
       - POSTGRES_PWD=admin
       - POSTGRES_SEEDS=postgresql
-#      - PERSISTENCE_DEFAULT=postgresql
       - TEMPORAL_LOG_LEVEL=debug
     volumes:
       - ./temporal.yaml:/etc/temporal/temporal.yaml
@@ -41,14 +38,8 @@ services:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CORS_ORIGINS=http://localhost:3000
     image: temporalio/ui:latest
-#    networks:
-#      - temporal-network
     ports:
       - "8080:8080"
-#networks:
-#  temporal-network:
-#    driver: bridge
-#    name: temporal-network
 
 volumes:
   postgres_data:

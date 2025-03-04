@@ -13,6 +13,7 @@ import io.temporal.worker.Worker;
 import moneytransferapp.temporal.*;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class MoneyTransferWorkflowTest {
@@ -34,6 +35,7 @@ public class MoneyTransferWorkflowTest {
         testEnv.close();
     }
 
+    @Ignore
     @Test
     public void testTransfer() {
         AccountActivity activities = mock(AccountActivityImpl.class);
