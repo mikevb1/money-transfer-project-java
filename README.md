@@ -1,7 +1,8 @@
 # Temporal meetup project: Money transfer
 
-Dit project is een vervolg op:
-[Run your first app tutorial](https://docs.temporal.io/docs/java/run-your-first-app-tutorial) to learn more about Temporal Workflows.
+In dit project is een aanvulling op deze tutorial van Temporal:
+[Run your first app tutorial](https://docs.temporal.io/docs/java/run-your-first-app-tutorial)
+
 
 ## Stappen
 
