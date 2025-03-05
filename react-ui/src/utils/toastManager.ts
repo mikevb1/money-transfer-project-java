@@ -1,5 +1,4 @@
 import toast, { Toast } from 'react-hot-toast';
-import React from 'react';
 
 class ToastManager {
   private static activeToasts: Toast[] = [];
@@ -20,16 +19,16 @@ class ToastManager {
       style: {
         cursor: 'pointer',
       },
-      onClick: () => toast.dismiss(newToast.id),
     });
 
     // Voeg toe aan actieve toasts
+    // @ts-ignore
     this.activeToasts.push(newToast);
 
     // Verwijder uit de lijst wanneer de toast verdwijnt
-    setTimeout(() => {
-      this.activeToasts = this.activeToasts.filter(t => t.id !== newToast.id);
-    }, 5000);
+    // setTimeout(() => {
+    //   this.activeToasts = this.activeToasts.filter(t => t.id !== newToast.id);
+    // }, 5000);
   }
 
   static success(message: string) {

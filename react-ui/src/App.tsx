@@ -21,7 +21,6 @@ function App() {
         }}
         gutter={8}
         reverseOrder={false}
-        maxToasts={3}
       />
       <div className="flex flex-col min-h-screen bg-gray-50">
         <BrowserRouter>
