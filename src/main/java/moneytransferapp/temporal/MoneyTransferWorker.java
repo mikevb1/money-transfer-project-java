@@ -5,10 +5,16 @@ import io.temporal.client.WorkflowClient;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@SpringBootApplication
 public class MoneyTransferWorker {
 
     public static void main(String[] args) {
+
+        SpringApplication.run(MoneyTransferWorker.class, args);
+
         // Create a stub that accesses a Temporal Service on the local development machine
         WorkflowServiceStubs serviceStub = WorkflowServiceStubs.newLocalServiceStubs();
 

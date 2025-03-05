@@ -1,10 +1,13 @@
 // @@@SNIPSTART money-transfer-java-initiate-transfer
 package moneytransferapp.temporal;
 
+import com.sun.tools.javac.Main;
 import io.temporal.api.common.v1.WorkflowExecution;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -29,6 +32,7 @@ public class TransferApp {
     }
 
     public static void main(String[] args) throws Exception {
+
 
         // In the Java SDK, a stub represents an element that participates in
         // Temporal orchestration and communicates using gRPC.

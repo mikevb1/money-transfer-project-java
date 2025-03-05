@@ -158,6 +158,23 @@
     Build settings for this project
   -->
   <build>
+    <plugins>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>repackage</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <mainClass>moneytransferapp.temporal.MoneyTransferWorker</mainClass>
+            </configuration>
+        </plugin>
+    </plugins>
+
     <pluginManagement>
       <plugins>
 
@@ -166,6 +183,7 @@
            https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle
          -->
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-clean-plugin</artifactId>
           <version>3.1.0</version>
         </plugin>
@@ -175,27 +193,39 @@
            https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging
           -->
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
           <version>3.0.2</version>
         </plugin>
 
         <!-- Maven Compiler plugin -->
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
         </plugin>
 
         <!-- Maven Surefire plugin -->
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.22.1</version>
         </plugin>
+
 
         <!-- Maven JAR plugin -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.1.0</version>
+                <configuration>
+                  <archive>
+                    <manifest>
+<!--                      <addClasspath>true</addClasspath>-->
+                      <mainClass>moneytransferapp.temporal.MoneyTransferWorker</mainClass>
+                    </manifest>
+                  </archive>
+          </configuration>
         </plugin>
 
         <!-- Exec Maven plugin -->
@@ -207,6 +237,7 @@
 
         <!-- Maven Install plugin -->
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-install-plugin</artifactId>
           <version>2.5.2</version>
         </plugin>
