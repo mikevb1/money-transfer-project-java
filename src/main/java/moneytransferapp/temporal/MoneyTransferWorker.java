@@ -11,38 +11,34 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.core.env.Environment;
 
 public class MoneyTransferWorker {
-    @Value("temporal.taskQueue")
-    private static String taskQueue;
-
-    @Value("temporal.service.address")
-    private static String serviceAddress;
-
-    public static void main(String[] args) {
-
-        // Spring context om application.properties in te lezen
-        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-        context.refresh();
-        Environment env = context.getEnvironment();
-
-        // Extern Temporal service adres ophalen uit properties
-        String temporalAddress = env.getProperty("temporal.service.address");
-
-        // Gebruik het externe adres voor de serviceStub configuratie
-        WorkflowServiceStubs serviceStub = WorkflowServiceStubs.newServiceStubs(
-                WorkflowServiceStubsOptions.newBuilder()
-                        .setTarget(temporalAddress)
-                        .build()
-        );
-
-        // De rest blijft hetzelfde
-        WorkflowClient client = WorkflowClient.newInstance(serviceStub);
-        WorkerFactory factory = WorkerFactory.newInstance(client);
-        Worker worker = factory.newWorker(env.getProperty("temporal.taskQueue", "money-transfer-task-queue"));
-        worker.registerWorkflowImplementationTypes(MoneyTransferWorkflowImpl.class);
-        worker.registerActivitiesImplementations(new AccountActivityImpl());
-
-        System.out.println("Worker is running and actively polling the Task Queue.");
-        factory.start();
+//    @Value("temporal.taskQueue")
+//    private static String taskQueue;
+//
+//    @Value("${temporal.service.address}")
+//    private static String temporalServiceAddress;
+//
+//
+//
+//
+//    public static void main(String[] args) {
+//
+//        // Spring context om application.properties in te lezen
+//        // Gebruik het externe adres voor de serviceStub configuratie
+//        WorkflowServiceStubs serviceStub = WorkflowServiceStubs.newServiceStubs(
+//                WorkflowServiceStubsOptions.newBuilder()
+//                        .setTarget(temporalServiceAddress)
+//                        .build()
+//        );
+//
+//        // De rest blijft hetzelfde
+//        WorkflowClient client = WorkflowClient.newInstance(serviceStub);
+//        WorkerFactory factory = WorkerFactory.newInstance(client);
+//        Worker worker = factory.newWorker(taskQueue);
+//        worker.registerWorkflowImplementationTypes(MoneyTransferWorkflowImpl.class);
+//        worker.registerActivitiesImplementations(new AccountActivityImpl());
+//
+//        System.out.println("Worker is running and actively polling the Task Queue.");
+//        factory.start();
 
 
 
@@ -75,7 +71,7 @@ public class MoneyTransferWorker {
 //
 //        // Start all registered Workers. The Workers will start polling the Task Queue.
 //        factory.start();
-    }
+//    }
 }
 // @@@SNIPEND
 
