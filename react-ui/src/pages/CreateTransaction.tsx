@@ -13,7 +13,7 @@ export function CreateTransaction() {
       const response = await fetch(
         `${
           import.meta.env.VITE_APP_BACKEND_URL
-        }/transactions/requestTransaction`,
+        }/api/transactions/requestTransaction`,
         {
           method: "POST",
           headers: {

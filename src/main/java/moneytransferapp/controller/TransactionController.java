@@ -9,7 +9,7 @@ import moneytransferapp.service.MoneyTransferService;
 import java.util.*;
 
 @RestController
-@RequestMapping("/transactions")
+@RequestMapping("/api/transactions")
 @CrossOrigin(origins = "*")
 public class TransactionController {
 

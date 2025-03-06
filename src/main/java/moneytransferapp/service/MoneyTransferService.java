@@ -4,6 +4,7 @@ import io.temporal.api.common.v1.WorkflowExecution;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
+import io.temporal.serviceclient.WorkflowServiceStubsOptions;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
 import moneytransferapp.dto.TransactionRequest;
@@ -11,6 +12,7 @@ import moneytransferapp.model.MoneyTransferWorkFlowModel;
 import moneytransferapp.model.TransactionStatus;
 import moneytransferapp.temporal.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import moneytransferapp.repository.MoneyTransferRepository;
 
@@ -23,27 +25,51 @@ public class MoneyTransferService {
 
     private final MoneyTransferRepository moneyTransferRepository;
     private final WorkflowClient client;
+    private final WorkerFactory factory;
+    private final String taskQueue;
     private static final Integer MIN_AMOUNT_FOR_APPROVAL = 1000;
 
     @Autowired
-    public MoneyTransferService(MoneyTransferRepository moneyTransferRepository) {
+    public MoneyTransferService(MoneyTransferRepository moneyTransferRepository, @Value("${temporal.service.address}") String temporalAddress,
+                                @Value("${temporal.taskQueue}") String taskQueue) {
         this.moneyTransferRepository = moneyTransferRepository;
+        this.taskQueue = taskQueue;
 
-        WorkflowServiceStubs serviceStubs = WorkflowServiceStubs.newLocalServiceStubs();
+//        WorkflowServiceStubs serviceStubs = WorkflowServiceStubs.newLocalServiceStubs();
+//
+//        this.client = WorkflowClient.newInstance(serviceStubs);
 
-        this.client = WorkflowClient.newInstance(serviceStubs);
+        // Gebruik extern Temporal service adres
+        WorkflowServiceStubs serviceStub = WorkflowServiceStubs.newServiceStubs(
+                WorkflowServiceStubsOptions.newBuilder()
+                        .setTarget(temporalAddress)
+                        .build()
+        );
 
-        startWorker();
+        this.client = WorkflowClient.newInstance(serviceStub);
+        this.factory = WorkerFactory.newInstance(client);
+
+
     }
 
     private void startWorker() {
-        WorkerFactory factory = WorkerFactory.newInstance(client);
-        Worker worker = factory.newWorker(Shared.MONEY_TRANSFER_TASK_QUEUE);
+
+        // Start worker op de juiste Task Queue
+        Worker worker = factory.newWorker(taskQueue);
         worker.registerWorkflowImplementationTypes(MoneyTransferWorkflowImpl.class);
         worker.registerActivitiesImplementations(new AccountActivityImpl());
 
-        System.out.println("Worker started, listening to task queue: " + Shared.MONEY_TRANSFER_TASK_QUEUE);
+        System.out.println("Worker is running and polling task queue: " + taskQueue);
         factory.start();
+        startWorker();
+
+//        WorkerFactory factory = WorkerFactory.newInstance(client);
+//        Worker worker = factory.newWorker(Shared.MONEY_TRANSFER_TASK_QUEUE);
+//        worker.registerWorkflowImplementationTypes(MoneyTransferWorkflowImpl.class);
+//        worker.registerActivitiesImplementations(new AccountActivityImpl());
+//
+//        System.out.println("Worker started, listening to task queue: " + Shared.MONEY_TRANSFER_TASK_QUEUE);
+//        factory.start();
     }
 
     public String startTransaction() {

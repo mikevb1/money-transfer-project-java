@@ -6,8 +6,14 @@ import io.temporal.api.common.v1.WorkflowExecution;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
+import io.temporal.serviceclient.WorkflowServiceStubsOptions;
+import io.temporal.worker.Worker;
+import io.temporal.worker.WorkerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.Environment;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -18,6 +24,11 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class TransferApp {
     private static final SecureRandom random;
+    @Value("temporal.taskQueue")
+    private static String taskQueue;
+
+    @Value("temporal.service.address")
+    private static String serviceAddress;
 
     static {
         // Seed the random number generator with nano date
@@ -33,16 +44,30 @@ public class TransferApp {
 
     public static void main(String[] args) throws Exception {
 
+        // Spring context om application.properties in te lezen
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+        context.refresh();
+        Environment env = context.getEnvironment();
 
-        // In the Java SDK, a stub represents an element that participates in
-        // Temporal orchestration and communicates using gRPC.
+        // Extern Temporal service adres ophalen uit properties
+        String temporalAddress = env.getProperty("temporal.service.address");
+
 
         // A WorkflowServiceStubs communicates with the Temporal front-end service.
-        WorkflowServiceStubs serviceStub = WorkflowServiceStubs.newLocalServiceStubs();
+//        WorkflowServiceStubs serviceStub = WorkflowServiceStubs.newLocalServiceStubs();
+        // Gebruik het externe adres voor de serviceStub configuratie
+        WorkflowServiceStubs serviceStub = WorkflowServiceStubs.newServiceStubs(
+                WorkflowServiceStubsOptions.newBuilder()
+                        .setTarget(temporalAddress)
+                        .build()
+        );
 
         // A WorkflowClient wraps the stub.
         // It can be used to start, signal, query, cancel, and terminate Workflows.
         WorkflowClient client = WorkflowClient.newInstance(serviceStub);
+        WorkerFactory factory = WorkerFactory.newInstance(client);
+
+        Worker worker = factory.newWorker(taskQueue);
 
         // Workflow options configure  Workflow stubs.
         // A WorkflowId prevents duplicate instances, which are removed.
@@ -51,10 +76,15 @@ public class TransferApp {
                 .setWorkflowId("money-transfer-workflow")
                 .build();
 
+        worker.registerWorkflowImplementationTypes(MoneyTransferWorkflowImpl.class);
+        worker.registerActivitiesImplementations(new AccountActivityImpl());
+
         // WorkflowStubs enable calls to methods as if the Workflow object is local
         // but actually perform a gRPC call to the Temporal Service.
         MoneyTransferWorkflow workflow = client.newWorkflowStub(MoneyTransferWorkflow.class, options);
-        
+
+
+
         // Configure the details for this money transfer request
         String referenceId = UUID.randomUUID().toString().substring(0, 18);
         String fromAccount = randomAccountIdentifier();
