@@ -8,7 +8,7 @@ Dit project is een aanvulling op deze tutorial van Temporal:
 
 - Run de docker-compose file en start de container
 - Start de back-end
-- Run de front-end
+- Run de front-end (prerequisites: Node.js en npm)
   - cd react-ui
   - npm run dev
 
