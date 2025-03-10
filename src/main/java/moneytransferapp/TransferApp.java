@@ -2,22 +2,61 @@ package moneytransferapp;
 
 import io.temporal.client.WorkflowClient;
 import io.temporal.serviceclient.WorkflowServiceStubs;
+import io.temporal.serviceclient.WorkflowServiceStubsOptions;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
 import moneytransferapp.temporal.AccountActivityImpl;
 import moneytransferapp.temporal.MoneyTransferWorkflowImpl;
-import moneytransferapp.temporal.Shared;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Environment;
+import org.springframework.web.servlet.config.annotation.CorsRegistration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @SpringBootApplication
 public class TransferApp {
+    private static final SecureRandom random;
+    private static final Integer MIN_AMOUNT_FOR_APPROVAL = 1000;
 
-    private WorkerFactory factory;
-    private WorkflowServiceStubs serviceStub;
+    @Autowired
+    private Environment env;
+
+    @Value("${temporal.taskQueue}")
+    private String taskQueue;
+
+    @Autowired
+    private WorkflowClient workflowClient;
+
+    @Value("${temporal.service.address}")
+    private String temporalServiceAddress;
+
+    static {
+        // Seed the random number generator with nano date
+        random = new SecureRandom();
+        random.setSeed(Instant.now().getNano());
+    }
+
+    // Utility method voor het genereren van random account nummers
+    public static String randomAccountIdentifier() {
+        return String.format("NL%s BANK %s %s %s",
+                IntStream.range(0, 2).mapToObj(i -> String.valueOf(random.nextInt(10))).collect(Collectors.joining()),
+                IntStream.range(0, 4).mapToObj(i -> String.valueOf(random.nextInt(10))).collect(Collectors.joining()),
+                IntStream.range(0, 4).mapToObj(i -> String.valueOf(random.nextInt(10))).collect(Collectors.joining()),
+                IntStream.range(0, 2).mapToObj(i -> String.valueOf(random.nextInt(10))).collect(Collectors.joining())
+        );
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(TransferApp.class, args);
@@ -25,18 +64,40 @@ public class TransferApp {
 
     @EventListener(ApplicationReadyEvent.class)
     public void startTemporalWorker() {
-        // Create a stub that accesses a Temporal Service on the local development
-        // machine
-        this.serviceStub = WorkflowServiceStubs.newLocalServiceStubs();
-        WorkflowClient client = WorkflowClient.newInstance(serviceStub);
-        this.factory = WorkerFactory.newInstance(client);
-        Worker worker = factory.newWorker(Shared.MONEY_TRANSFER_TASK_QUEUE);
+        System.out.printf("\nMONEY TRANSFER PROJECT\n\n");
+        System.out.println("Connecting to Temporal service at: " + temporalServiceAddress);
 
-        worker.registerWorkflowImplementationTypes(MoneyTransferWorkflowImpl.class);
-        worker.registerActivitiesImplementations(new AccountActivityImpl());
+        try {
+            WorkerFactory factory = WorkerFactory.newInstance(workflowClient);
+            Worker worker = factory.newWorker(taskQueue);
 
-        System.out.println("Worker is running and actively polling the Task Queue.");
-        factory.start();
+            worker.registerWorkflowImplementationTypes(MoneyTransferWorkflowImpl.class);
+            worker.registerActivitiesImplementations(new AccountActivityImpl());
+
+            System.out.println("Worker is running and actively polling the Task Queue: " + taskQueue);
+            factory.start();
+        } catch (Exception e) {
+            System.err.println("Failed to connect to Temporal service: " + e.getMessage());
+            // Optioneel: als je wilt dat de applicatie stopt bij geen verbinding
+            // System.exit(1);
+        }
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                String urls = env.getProperty("cors.urls");
+                CorsRegistration reg = registry.addMapping("/api/**");
+                if (urls != null) {
+                    for (String url : urls.split(",")) {
+                        reg.allowedOrigins(url);
+                    }
+                    System.out.println("CORS ORIGINS: " + urls);
+                }
+            }
+        };
     }
 
     @EventListener(ContextClosedEvent.class)

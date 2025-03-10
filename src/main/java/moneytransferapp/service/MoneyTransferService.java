@@ -4,11 +4,16 @@ import io.temporal.api.common.v1.WorkflowExecution;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
+import io.temporal.serviceclient.WorkflowServiceStubsOptions;
+import io.temporal.worker.Worker;
+import io.temporal.worker.WorkerFactory;
+import moneytransferapp.TransferApp;
 import moneytransferapp.dto.TransactionRequest;
 import moneytransferapp.model.MoneyTransferWorkFlowModel;
 import moneytransferapp.model.TransactionStatus;
 import moneytransferapp.temporal.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import moneytransferapp.repository.MoneyTransferRepository;
 
@@ -20,23 +25,28 @@ import java.util.concurrent.ThreadLocalRandom;
 public class MoneyTransferService {
 
     private final MoneyTransferRepository moneyTransferRepository;
-    private final WorkflowClient client;
+    private final String taskQueue;
     private static final Integer MIN_AMOUNT_FOR_APPROVAL = 1000;
 
     @Autowired
-    public MoneyTransferService(MoneyTransferRepository moneyTransferRepository) {
+    private WorkflowClient client;
+
+    @Autowired
+    public MoneyTransferService(
+            MoneyTransferRepository moneyTransferRepository,
+            WorkflowClient workflowClient,
+            @Value("${temporal.taskQueue}") String taskQueue) {
+        
         this.moneyTransferRepository = moneyTransferRepository;
-
-        WorkflowServiceStubs serviceStubs = WorkflowServiceStubs.newLocalServiceStubs();
-
-        this.client = WorkflowClient.newInstance(serviceStubs);
+        this.client = workflowClient;
+        this.taskQueue = taskQueue;
     }
 
     public String startTransaction() {
         // Create the workflow options
         WorkflowOptions options = WorkflowOptions.newBuilder()
-                .setTaskQueue(Shared.MONEY_TRANSFER_TASK_QUEUE)
-                .setWorkflowId(String.valueOf(UUID.randomUUID()))
+                .setTaskQueue(taskQueue)
+                .setWorkflowId(String.valueOf(UUID.randomUUID( )))
                 .build();
 
         // Create the workflow stub
@@ -175,7 +185,7 @@ public class MoneyTransferService {
 
         // Create the workflow options
         WorkflowOptions options = WorkflowOptions.newBuilder()
-                .setTaskQueue(Shared.MONEY_TRANSFER_TASK_QUEUE)
+                .setTaskQueue(taskQueue)
                 .setWorkflowId(String.valueOf(UUID.randomUUID()))
                 .build();
 

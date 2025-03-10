@@ -71,7 +71,7 @@ export function TransactionList() {
         setTransactions(mockTransactions);
       } else {
         const response = await fetch(
-          `${import.meta.env.VITE_APP_BACKEND_URL}/transactions`
+          `${import.meta.env.VITE_APP_BACKEND_URL}/api/transactions`
         );
         if (!response.ok) {
           throw new Error("Kon geen verbinding maken met de server");
@@ -110,7 +110,7 @@ export function TransactionList() {
       const response = await fetch(
         `${
           import.meta.env.VITE_APP_BACKEND_URL
-        }/transactions/approve?transactionReference=${transactionReference}`,
+        }/api/transactions/approve?transactionReference=${transactionReference}`,
         {
           method: "PUT",
         }
@@ -146,7 +146,7 @@ export function TransactionList() {
       const response = await fetch(
         `${
           import.meta.env.VITE_APP_BACKEND_URL
-        }/transactions/disapprove?transactionReference=${transactionReference}`,
+        }/api/transactions/disapprove?transactionReference=${transactionReference}`,
         {
           method: "PUT",
         }
