@@ -2,6 +2,6 @@
 package moneytransferapp.temporal;
 
 public interface Shared {
-    static final String MONEY_TRANSFER_TASK_QUEUE = "MONEY_TRANSFER_TASK_QUEUE";
+    String MONEY_TRANSFER_TASK_QUEUE = "money-transfer-task-queue";
 }
 // @@@SNIPEND

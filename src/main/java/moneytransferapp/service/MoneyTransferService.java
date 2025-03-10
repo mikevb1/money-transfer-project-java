@@ -4,8 +4,6 @@ import io.temporal.api.common.v1.WorkflowExecution;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
-import io.temporal.worker.Worker;
-import io.temporal.worker.WorkerFactory;
 import moneytransferapp.dto.TransactionRequest;
 import moneytransferapp.model.MoneyTransferWorkFlowModel;
 import moneytransferapp.model.TransactionStatus;
@@ -32,18 +30,6 @@ public class MoneyTransferService {
         WorkflowServiceStubs serviceStubs = WorkflowServiceStubs.newLocalServiceStubs();
 
         this.client = WorkflowClient.newInstance(serviceStubs);
-
-        startWorker();
-    }
-
-    private void startWorker() {
-        WorkerFactory factory = WorkerFactory.newInstance(client);
-        Worker worker = factory.newWorker(Shared.MONEY_TRANSFER_TASK_QUEUE);
-        worker.registerWorkflowImplementationTypes(MoneyTransferWorkflowImpl.class);
-        worker.registerActivitiesImplementations(new AccountActivityImpl());
-
-        System.out.println("Worker started, listening to task queue: " + Shared.MONEY_TRANSFER_TASK_QUEUE);
-        factory.start();
     }
 
     public String startTransaction() {

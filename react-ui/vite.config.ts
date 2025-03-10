@@ -13,7 +13,7 @@ export default defineConfig({
     outDir: 'dist',
   },
   server: {
-    port: 8081,  // Specify the port where your app is running
+    port: 8082,  // Specify the port where your app is running
   },
   // define: {
   //   'import.meta.env.VITE_BACKEND_URL': JSON.stringify('http://localhost:8081')
