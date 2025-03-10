@@ -21,5 +21,5 @@ Mogelijk opties om aan dit project toe te voegen zijn:
 - Mogelijkheid tot annuleren voordat een transfer geapproved wordt
 - Batch transfers
 - Categorisatie van transfers
-- 
-
+- Transactie handmatig approve nodig uitbreiden obv:
+  - IBAN
