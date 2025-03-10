@@ -13,6 +13,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.web.servlet.config.annotation.CorsRegistration;
@@ -28,7 +29,6 @@ import java.util.stream.IntStream;
 @SpringBootApplication
 public class TransferApp {
     private static final SecureRandom random;
-    private static final Integer MIN_AMOUNT_FOR_APPROVAL = 1000;
 
     @Autowired
     private Environment env;
@@ -41,6 +41,10 @@ public class TransferApp {
 
     @Value("${temporal.service.address}")
     private String temporalServiceAddress;
+
+    private WorkerFactory factory;
+
+    private WorkflowServiceStubs service;
 
     static {
         // Seed the random number generator with nano date
@@ -68,7 +72,7 @@ public class TransferApp {
         System.out.println("Connecting to Temporal service at: " + temporalServiceAddress);
 
         try {
-            WorkerFactory factory = WorkerFactory.newInstance(workflowClient);
+            this.factory = WorkerFactory.newInstance(workflowClient);
             Worker worker = factory.newWorker(taskQueue);
 
             worker.registerWorkflowImplementationTypes(MoneyTransferWorkflowImpl.class);
@@ -76,6 +80,7 @@ public class TransferApp {
 
             System.out.println("Worker is running and actively polling the Task Queue: " + taskQueue);
             factory.start();
+
         } catch (Exception e) {
             System.err.println("Failed to connect to Temporal service: " + e.getMessage());
             // Optioneel: als je wilt dat de applicatie stopt bij geen verbinding
@@ -108,8 +113,8 @@ public class TransferApp {
             factory.shutdown();
 
         }
-        if (serviceStub != null) {
-            serviceStub.shutdownNow();
+        if (workflowClient.getWorkflowServiceStubs() != null) {
+            workflowClient.getWorkflowServiceStubs().shutdown();
         }
         System.out.println("Temporal worker shut down successfully.");
     }

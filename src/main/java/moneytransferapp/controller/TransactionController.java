@@ -1,8 +1,10 @@
 package moneytransferapp.controller;
 
 import moneytransferapp.dto.TransactionRequest;
+import moneytransferapp.dto.TransactionResponse;
 import moneytransferapp.model.MoneyTransferWorkFlowModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import moneytransferapp.service.MoneyTransferService;
 
@@ -21,9 +23,9 @@ public class TransactionController {
     }
 
     @PostMapping("/start")
-    public String startTransaction() {
+    public ResponseEntity<TransactionResponse> startTransaction() {
 
-        return moneyTransferService.startTransaction();
+        return ResponseEntity.ok(moneyTransferService.startTransaction());
 
     }
 

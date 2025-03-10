@@ -9,11 +9,13 @@ import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
 import moneytransferapp.TransferApp;
 import moneytransferapp.dto.TransactionRequest;
+import moneytransferapp.dto.TransactionResponse;
 import moneytransferapp.model.MoneyTransferWorkFlowModel;
 import moneytransferapp.model.TransactionStatus;
 import moneytransferapp.temporal.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import moneytransferapp.repository.MoneyTransferRepository;
 
@@ -36,13 +38,13 @@ public class MoneyTransferService {
             MoneyTransferRepository moneyTransferRepository,
             WorkflowClient workflowClient,
             @Value("${temporal.taskQueue}") String taskQueue) {
-        
+
         this.moneyTransferRepository = moneyTransferRepository;
         this.client = workflowClient;
         this.taskQueue = taskQueue;
     }
 
-    public String startTransaction() {
+    public TransactionResponse startTransaction() {
         // Create the workflow options
         WorkflowOptions options = WorkflowOptions.newBuilder()
                 .setTaskQueue(taskQueue)
@@ -91,16 +93,9 @@ public class MoneyTransferService {
 
         moneyTransferRepository.save(moneyTransferWorkflowEntity);
 
-        if (amountToTransfer >= 1000) {
-            return String.format(
-                    "Request received. Because your request of €%.2f is higher than €1000, it needs to be reviewed. Thank you for your patience.",
-                    amountToTransfer);
-        } else {
-            moneyTransferWorkflowEntity.setStatus(TransactionStatus.APPROVED);
-            moneyTransferWorkflowEntity.setProcessedAt(LocalDateTime.now());
-            moneyTransferRepository.save(moneyTransferWorkflowEntity);
-            return String.format("Amount of €%.2f transferred.", amountToTransfer);
-        }
+        return new TransactionResponse(moneyTransferWorkflowEntity.getWorkflowId(), moneyTransferWorkflowEntity.getRunId(),
+                    moneyTransferWorkflowEntity.getStatus(), moneyTransferWorkflowEntity.getTransactionReference(), moneyTransferWorkflowEntity.getFromAccount(), moneyTransferWorkflowEntity.getToAccount(),
+                    moneyTransferWorkflowEntity.getAmountToTransfer());
     }
 
     public List<MoneyTransferWorkFlowModel> getTransactions() {
