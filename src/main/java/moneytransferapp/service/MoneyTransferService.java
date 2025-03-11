@@ -93,9 +93,20 @@ public class MoneyTransferService {
 
         moneyTransferRepository.save(moneyTransferWorkflowEntity);
 
-        return new TransactionResponse(moneyTransferWorkflowEntity.getWorkflowId(), moneyTransferWorkflowEntity.getRunId(),
-                    moneyTransferWorkflowEntity.getStatus(), moneyTransferWorkflowEntity.getTransactionReference(), moneyTransferWorkflowEntity.getFromAccount(), moneyTransferWorkflowEntity.getToAccount(),
-                    moneyTransferWorkflowEntity.getAmountToTransfer());
+        if (amountToTransfer < 1000) {
+            moneyTransferWorkflowEntity.setStatus(TransactionStatus.APPROVED);
+            moneyTransferWorkflowEntity.setProcessedAt(LocalDateTime.now());
+            moneyTransferRepository.save(moneyTransferWorkflowEntity);
+        }
+        return new TransactionResponse(
+                moneyTransferWorkflowEntity.getWorkflowId(),
+                moneyTransferWorkflowEntity.getRunId(),
+                moneyTransferWorkflowEntity.getStatus(),
+                moneyTransferWorkflowEntity.getTransactionReference(),
+                moneyTransferWorkflowEntity.getFromAccount(),
+                moneyTransferWorkflowEntity.getToAccount(),
+                moneyTransferWorkflowEntity.getAmountToTransfer());
+
     }
 
     public List<MoneyTransferWorkFlowModel> getTransactions() {
@@ -229,9 +240,20 @@ public class MoneyTransferService {
 
         moneyTransferRepository.save(moneyTransferWorkflowEntity);
 
-        return new TransactionResponse(moneyTransferWorkflowEntity.getWorkflowId(), moneyTransferWorkflowEntity.getRunId(),
-                moneyTransferWorkflowEntity.getStatus(), moneyTransferWorkflowEntity.getTransactionReference(), moneyTransferWorkflowEntity.getFromAccount(), moneyTransferWorkflowEntity.getToAccount(),
+        if (amountToTransfer < 1000) {
+            moneyTransferWorkflowEntity.setStatus(TransactionStatus.APPROVED);
+            moneyTransferWorkflowEntity.setProcessedAt(LocalDateTime.now());
+            moneyTransferRepository.save(moneyTransferWorkflowEntity);
+        }
+        return new TransactionResponse(
+                moneyTransferWorkflowEntity.getWorkflowId(),
+                moneyTransferWorkflowEntity.getRunId(),
+                moneyTransferWorkflowEntity.getStatus(),
+                moneyTransferWorkflowEntity.getTransactionReference(),
+                moneyTransferWorkflowEntity.getFromAccount(),
+                moneyTransferWorkflowEntity.getToAccount(),
                 moneyTransferWorkflowEntity.getAmountToTransfer());
+
     }
 
     public TransactionDetails mapToTransactionDetails(MoneyTransferWorkFlowModel workflowModel) {
