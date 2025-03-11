@@ -176,7 +176,7 @@ public class MoneyTransferService {
         }
     }
 
-    public String requestTransfer(TransactionRequest request) {
+    public TransactionResponse requestTransfer(TransactionRequest request) {
 
         // Create the workflow options
         WorkflowOptions options = WorkflowOptions.newBuilder()
@@ -229,16 +229,9 @@ public class MoneyTransferService {
 
         moneyTransferRepository.save(moneyTransferWorkflowEntity);
 
-        if (amountToTransfer >= 1000) {
-            return String.format(
-                    "Request received. Because your request of €%.2f is higher than €1000, it needs to be reviewed. Thank you for your patience.",
-                    amountToTransfer);
-        } else {
-            moneyTransferWorkflowEntity.setStatus(TransactionStatus.APPROVED);
-            moneyTransferWorkflowEntity.setProcessedAt(LocalDateTime.now());
-            moneyTransferRepository.save(moneyTransferWorkflowEntity);
-            return String.format("Amount of €%.2f transferred.", amountToTransfer);
-        }
+        return new TransactionResponse(moneyTransferWorkflowEntity.getWorkflowId(), moneyTransferWorkflowEntity.getRunId(),
+                moneyTransferWorkflowEntity.getStatus(), moneyTransferWorkflowEntity.getTransactionReference(), moneyTransferWorkflowEntity.getFromAccount(), moneyTransferWorkflowEntity.getToAccount(),
+                moneyTransferWorkflowEntity.getAmountToTransfer());
     }
 
     public TransactionDetails mapToTransactionDetails(MoneyTransferWorkFlowModel workflowModel) {

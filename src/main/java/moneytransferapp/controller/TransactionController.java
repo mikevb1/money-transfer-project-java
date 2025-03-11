@@ -48,8 +48,8 @@ public class TransactionController {
     }
 
     @PostMapping("/requestTransaction")
-    public String requestTransaction(@RequestBody TransactionRequest request) {
+    public ResponseEntity<TransactionResponse> requestTransaction(@RequestBody TransactionRequest request) {
 
-        return moneyTransferService.requestTransfer(request);
+        return ResponseEntity.ok(moneyTransferService.requestTransfer(request));
     }
 }
