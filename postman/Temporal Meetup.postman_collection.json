@@ -10,7 +10,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:8081/transactions",
+					"raw": "localhost:8081/api/transactions",
 					"host": [
 						"localhost"
 					],
@@ -28,7 +28,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "localhost:8081/transactions/start",
+					"raw": "localhost:8081/api/transactions/start",
 					"host": [
 						"localhost"
 					],
@@ -56,7 +56,7 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:8081/transactions/requestTransaction",
+					"raw": "localhost:8081/api/transactions/requestTransaction",
 					"host": [
 						"localhost"
 					],
@@ -75,7 +75,7 @@
 				"method": "PUT",
 				"header": [],
 				"url": {
-					"raw": "localhost:8081/transactions/approve?transactionReference=TO_BE_FILLED_IN",
+					"raw": "localhost:8081/api/transactions/approve?transactionReference=TO_BE_FILLED_IN",
 					"host": [
 						"localhost"
 					],
@@ -100,7 +100,7 @@
 				"method": "PUT",
 				"header": [],
 				"url": {
-					"raw": "localhost:8081/transactions/disapprove?transactionReference=b75a9452-7717-4a52",
+					"raw": "localhost:8081/api/transactions/disapprove?transactionReference=b75a9452-7717-4a52",
 					"host": [
 						"localhost"
 					],

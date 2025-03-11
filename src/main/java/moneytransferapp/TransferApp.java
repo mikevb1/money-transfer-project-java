@@ -44,8 +44,6 @@ public class TransferApp {
 
     private WorkerFactory factory;
 
-    private WorkflowServiceStubs service;
-
     static {
         // Seed the random number generator with nano date
         random = new SecureRandom();
